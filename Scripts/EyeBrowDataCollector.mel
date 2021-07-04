@@ -1,0 +1,80 @@
+PrintData();
+proc PrintData()
+{    
+    int $startFrame = 0;
+    int $endFrame = 20;    
+
+    string $rCtrls[] = {"FKEyeBrowMain_R","FKEyeBrowStart_R","FKEyeBrowCenter_R","FKEyeBrowEnd_R"};
+    string $lCtrls[] = {"FKEyeBrowMain_L","FKEyeBrowStart_L","FKEyeBrowCenter_L","FKEyeBrowEnd_L"};
+    currentTime $startFrame;
+    vector $p1 = `xform -q -t -ws $rCtrls[1]`;
+    vector $p2 = `xform -q -t -ws $rCtrls[3]`;
+    float $len = `mag ($p2-$p1)`;
+    print ("global float $refEyeBrowSize = " + $len + ";");
+    print "\n";
+    
+
+    int $currentFrame;
+    vector $scales[];
+    vector $rotations[];
+    vector $translations[];
+    int $cnt = 0;
+    for($currentFrame = $startFrame; $currentFrame <= $endFrame; $currentFrame++)
+    {
+        currentTime $currentFrame;
+        int $i = 0;
+        for($i = 0; $i < 4; $i++)
+        {
+            $translations[$cnt] = `getAttr ($rCtrls[$i] + ".translate")`;
+            $rotations[$cnt] = `getAttr ($rCtrls[$i] + ".rotate")`;
+            $scales[$cnt] = `getAttr ($rCtrls[$i] + ".scale")`;
+            $cnt++;
+        }   
+    }
+    int $size = size($translations);
+    int $i;
+    print "vector $translations[] = {";
+    for($i = 0; $i < $size; $i++)
+    {
+        vector $tmp = $translations[$i];
+        print "<<";
+        print ($tmp.x + ",");
+        print ($tmp.y + ",");
+        print ($tmp.z);
+        if($i == $size - 1)
+        {    print ">>";}
+        else
+        {    print ">>, ";}
+    }
+    print "};";print "\n";
+    
+    print "vector $rotations[] = {";
+    for($i = 0; $i < $size; $i++)
+    {
+        vector $tmp = $rotations[$i];
+        print "<<";
+        print ($tmp.x + ",");
+        print ($tmp.y + ",");
+        print ($tmp.z);
+        if($i == $size - 1)
+        {    print ">>";}
+        else
+        {    print ">>, ";}
+    }
+    print "};";print "\n";
+    
+    print "vector $scales[] = {";
+    for($i = 0; $i < $size; $i++)
+    {
+        vector $tmp = $scales[$i];
+        print "<<";
+        print ($tmp.x + ",");
+        print ($tmp.y + ",");
+        print ($tmp.z);
+        if($i == $size - 1)
+        {    print ">>";}
+        else
+        {    print ">>, ";}
+    }
+    print "};";print "\n";
+}

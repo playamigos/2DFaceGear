@@ -1,0 +1,399 @@
+global string $rEyeBrowCtrls[] = {"FKEyeBrowMain_R","FKEyeBrowStart_R","FKEyeBrowCenter_R","FKEyeBrowEnd_R"};
+global string $lEyeBrowCtrls[] = {"FKEyeBrowMain_L","FKEyeBrowStart_L","FKEyeBrowCenter_L","FKEyeBrowEnd_L"};
+
+global float $refEyeBrowSize = 0.3254360072;
+
+LoadEyeBrowPicker();
+global proc LoadEyeBrowPicker()
+{
+    if(`dockControl -ex "ebDocker"`)
+    {
+        return;
+    }
+    print "eyeBrowPicker Loaded";
+    global string $ebWindow;
+    global string $ebDocker;    
+    global string $ebScroll;
+    global string $ebColumnLayout;
+    global string $ebGridLayout;
+    global string $leftEbBox;
+    global int $leftEbValue;
+    global string $rightEbBox;
+    global int $rightEbValue;
+
+    $ebWindow = `window -sizeable 1`; 
+    $ebScroll = `scrollLayout -p $ebWindow -horizontalScrollBarThickness 16 -verticalScrollBarThickness 16 -cr true`;
+    $ebDocker = `dockControl -ret false -area "left" -content $ebWindow -label "EyeBrow Picker" -allowedArea "all" ebDocker`;
+    $ebColumnLayout = `columnLayout -p $ebScroll -adj true`;
+    gridLayout -p $ebColumnLayout -nrc 7 2 -cwh 120 25;
+    $leftEbValue = 1;
+    $rightEbValue = 1;
+    $rightEbBox = `checkBox -label "Right" -v $rightEbValue -cc RightEbChanged`;
+    $leftEbBox = `checkBox -label "Left" -v $leftEbValue -cc LeftEbChanged`;
+    button -label "Move Up" -c "EyeBrowUpDown 1";
+    button -label "Move Down" -c "EyeBrowUpDown -1";
+    button -label "Move Closer" -c "EyeBrowCloseFar 1";
+    button -label "Move Farther" -c "EyeBrowCloseFar -1";
+    button -label "Move Front" -c "EyeBrowFrontBack 1";
+    button -label "Move Back" -c "EyeBrowFrontBack -1";
+    button -label "Rotate Inward" -c "EyeBrowRotateInOut 1";
+    button -label "Rotate Outward" -c "EyeBrowRotateInOut -1";
+    button -label "Tilt Forward" -c "EyeBrowTiltFrontBack 1";
+    button -label "Tilt Backward" -c "EyeBrowTiltFrontBack -1";
+    button -label "Rotate Forward" -c "EyeBrowRotateFrontBack 1";
+    button -label "Rotate Backward" -c "EyeBrowRotateFrontBack -1";
+    button -label "Increase" -c "EyeBrowIncreaseEffect 1";
+    button -label "Decrease" -c "EyeBrowIncreaseEffect -1";
+            
+    $ebGridLayout = `rowColumnLayout -parent $ebColumnLayout -nc 2`;
+
+    //string $dirPath = `python "os.path.join(os.path.dirname(__file__), 'my_file')"`;
+    string $dirPath = `whatIs "LoadEyeBrowPicker"`;
+    //string $dirPath = "/EyeBrowImgs";
+    $dirPath = `substring $dirPath 25 (size($dirPath))`;
+    $dirPath = dirname($dirPath);
+    $dirPath = dirname($dirPath) + "/EyeBrowImgs";
+    string $file;
+    int $i;
+    for ($i = 0; $i <= 20; $i++ )
+    {
+        $file = (string)$i + ".png";
+        $frame = `frameLayout -p $ebGridLayout -label $file -bv true -lv false`;
+        symbolButton -p $frame -c ("ChangeEyeBrowPreset "+$i) -image ($dirPath +"/"+ $file) -w 117 -h 35;
+    } 
+}
+
+global proc ChangeEyeBrowPreset(int $id)
+{
+    string $namesp = CheckForValidEyeBrow();
+    if($namesp == "failed:(")
+    {
+        print "No EyeBrow Control Selected";
+        return;
+    }
+    global string $rEyeBrowCtrls[];
+    global string $lEyeBrowCtrls[];
+    global int $leftEbValue;
+    global int $rightEbValue;
+    vector $translations[] = {<<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<-0.0004284567835,-0.02429997075,-0.002103>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<0,0.003529812345,0.030671>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<2.023393992e-16,-0.07703468695,0>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<1.19119686e-16,-0.07950307298,0>>, <<0,0,0>>, <<0,0,0>>, <<2.949207612e-16,-0.08077620421,0>>, <<3.365541247e-16,-0.08077620421,-0.036514>>, <<0,0,0>>, <<-3.077889098e-17,-0.01532090368,0>>, <<2.051920374e-16,-0.02957023898,0.004775>>, <<8.387890932e-16,0.02965463038,0.017283>>, <<5.494194509e-16,-0.09378989074,0.03192>>, <<-3.077889098e-17,-0.01532090368,0>>, <<2.051920374e-16,-0.02957023898,0.004775>>, <<9.246579053e-16,0.03317895767,0.045269>>, <<5.494194509e-16,-0.09378989074,0.03192>>, <<0,0,0>>, <<0,0,0>>, <<-0.005042297721,-0.05099716084,-0.071041>>, <<-0.005042297721,0.01178538321,0.006931>>, <<-5.190229457e-17,-0.003757669567,0.028889>>, <<5.834362941e-17,0.001621906134,-0.001456>>, <<5.271766569e-16,0.04837008664,0.09509>>, <<4.586216218e-17,-0.1501739874,0.019913>>, <<5.202281975e-17,-0.01751285508,-0.003051>>, <<2.45029691e-17,0.01454886637,0.019336>>, <<2.489328188e-16,0.01596464591,0.042864>>, <<-0.01092935547,-0.05404634781,0.024594>>, <<0,0,0>>, <<-3.350184713e-17,-0.05415959412,-0.017573>>, <<3.012209923e-16,0.003587189108,0.084889>>, <<0,0,0>>, <<8.557572543e-17,0.006913606879,0.006823>>, <<9.595189226e-18,0.02191022385,-0.00239>>, <<-0.01252680149,-0.1119138564,-0.031536>>, <<-0.01538290752,-0.1417070388,0>>, <<0,0,0>>, <<0,0,0>>, <<1.353084311e-16,0.01971040804,0.070652>>, <<3.522019293e-16,-0.01411448932,-0.012202>>, <<0,0,0>>, <<-1.587678556e-17,0.02083957581,0.017525>>, <<3.416321046e-16,-0.02749003936,-0.006457>>, <<0,0,0>>, <<0,0,0>>, <<-2.532407076e-17,-0.09842716085,0>>, <<3.615247263e-16,0.02070223637,0.029098>>, <<2.571727553e-16,-0.01914623826,-0.00416>>, <<0,0,0>>, <<1.793559592e-17,-0.03978330723,0.017722>>, <<6.178301198e-16,-0.01857022293,0.015713>>, <<3.968179951e-16,-0.04034446671,0.019574>>, <<0,0,0>>, <<-3.339342691e-17,-0.1067690923,0.014346>>, <<3.386791095e-17,-0.02155701086,0.024928>>, <<0,0,0>>, <<0,0,0>>, <<-1.286961253e-17,-0.09003805445,0>>, <<4.544061109e-16,-0.07912417006,-0.021802>>, <<0,0,0>>, <<0,0,0>>, <<-4.582242173e-18,-0.0760760289,-0.035879>>, <<6.174701176e-16,-0.1156357626,-0.009479>>, <<0,0,0>>, <<0,0,0>>, <<4.689174396e-17,0.01876752856,0.002479>>, <<2.170710326e-16,-0.001605791586,0.021892>>, <<-1.006139616e-16,-0.02486341216,0.005471>>};
+    vector $rotations[] = {<<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<25.03730273,-3.025693406,-1.41236>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<-25,0,0>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<-24.97570477,0,0>>, <<0,0,0>>, <<32.24127957,0,0>>, <<0,0,0>>, <<-28.04692773,0,0>>, <<0,0,0>>, <<23.94396933,0,0>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<32.22342937,0,0>>, <<0,0,0>>, <<20.24850388,0,0>>, <<-7.177481943,0,0>>, <<-53.2951358,0,0>>, <<0,0,0>>, <<27.65384026,0,0>>, <<-7.177481943,0,0>>, <<-53.2951358,0,0>>, <<0,0,0>>, <<0,0,0>>, <<-21.15321795,0,0>>, <<30.46003511,0,0>>, <<0,0,0>>, <<48.08380462,0,0>>, <<-31.6870135,0,0>>, <<-40.77092119,0,0>>, <<0,0,0>>, <<65.67330287,0,0>>, <<-24.12232076,0,0>>, <<35.91417677,2.63038566,3.929523>>, <<0,0,0>>, <<92.28515812,0,0>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<-24.78925812,0,0>>, <<0,0,0>>, <<0,0,0>>, <<0,0,0>>, <<84.97671119,0,0>>, <<-24.58361629,0,0>>, <<30.1432206,0,0>>, <<0,0,0>>, <<16.41807412,0,0>>, <<-29.40090347,0,0>>, <<16.21335826,0,0>>, <<0,0,0>>, <<47.92793272,0,0>>, <<22.39250123,0,0>>, <<-22.5349144,0,0>>, <<0,0,0>>, <<-19.47229986,0,0>>, <<31.83355529,0,0>>, <<-40.03872906,0,0>>, <<0,0,0>>, <<73.46880298,0,0>>, <<3.043916217,0,0>>, <<23.6179886,0,0>>, <<0,0,0>>, <<-3.630175059,0,0>>, <<17.16588949,0,0>>, <<25.96065105,0,0>>, <<0,0,0>>, <<-3.630175059,0,0>>, <<17.16588949,0,0>>, <<25.96065105,0,0>>, <<0,0,0>>, <<-56.57723828,0,0>>, <<18.35588569,0,0>>, <<-32.59994729,0,0>>};
+    vector $scales[] = {<<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,0.349198>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,0.205142>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,0.559147>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1.321855>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,0.8036543304,0.427953>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,0.724443>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,0.724443>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,0.443978>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>, <<1,1,1>>};
+    float $factor = GetEyeBrowSizeFactor($namesp);
+    if($leftEbValue)
+    {
+        int $i = 0;
+        for($i = 0; $i < 4; $i++)
+        {
+            int $k = $id * 4 + $i;
+            vector $tmp = $translations[$k];
+            setAttr ($namesp + $lEyeBrowCtrls[$i]+".translate") -type "double3" (-1*$tmp.x * $factor) (-1*$tmp.y * $factor) (-1*$tmp.z * $factor);  
+            $tmp = $rotations[$k];
+            setAttr ($namesp + $lEyeBrowCtrls[$i]+".rotate") -type "double3" ($tmp.x) ($tmp.y) ($tmp.z);
+            $tmp = $scales[$k];
+            setAttr ($namesp + $lEyeBrowCtrls[$i]+".scale") -type "double3" ($tmp.x) ($tmp.y) ($tmp.z);         
+        }
+    }
+    if($rightEbValue)
+    {
+        int $i = 0;
+        for($i = 0; $i < 4; $i++)
+        {
+            int $k = $id * 4 + $i;
+            vector $tmp = $translations[$k];
+            setAttr ($namesp + $rEyeBrowCtrls[$i]+".translate") -type "double3" ($tmp.x * $factor) ($tmp.y * $factor) ($tmp.z * $factor);            
+            $tmp = $rotations[$k];
+            setAttr ($namesp + $rEyeBrowCtrls[$i]+".rotate") -type "double3" ($tmp.x) ($tmp.y) ($tmp.z);
+            $tmp = $scales[$k];
+            setAttr ($namesp + $rEyeBrowCtrls[$i]+".scale") -type "double3" ($tmp.x) ($tmp.y) ($tmp.z);         
+        }
+    }
+}
+
+global proc EyeBrowUpDown(int $up)
+{
+    string $namesp = CheckForValidEyeBrow();
+    if($namesp == "failed:(")
+    {
+        print "No EyeBrow Control Selected";
+        return;
+    }
+    global string $rEyeBrowCtrls[];
+    global string $lEyeBrowCtrls[];
+    global int $leftEbValue;
+    global int $rightEbValue;
+    global float $refEyeBrowSize;
+    float $factor = GetEyeBrowSizeFactor($namesp);
+    float $stepSize = $factor * $refEyeBrowSize *$up *(0.03);
+    
+    if($leftEbValue)
+    {
+        move -r -os -wd 0 ($stepSize) 0 ($namesp + $lEyeBrowCtrls[0]);
+    }
+    if($rightEbValue)
+    {        
+        move -r -os -wd 0 (-1*$stepSize) 0 ($namesp + $rEyeBrowCtrls[0]);
+    }
+}
+
+global proc EyeBrowCloseFar(int $close)
+{
+    string $namesp = CheckForValidEyeBrow();
+    if($namesp == "failed:(")
+    {
+        print "No EyeBrow Control Selected";
+        return;
+    }
+    global string $rEyeBrowCtrls[];
+    global string $lEyeBrowCtrls[];
+    global int $leftEbValue;
+    global int $rightEbValue;
+    global float $refEyeBrowSize;
+    float $factor = GetEyeBrowSizeFactor($namesp);
+    float $stepSize = $factor * $refEyeBrowSize *$close *(0.03);
+    
+    if($leftEbValue)
+    {
+        move -r -os -wd 0 0 (-1*$stepSize) ($namesp + $lEyeBrowCtrls[0]);
+    }
+    if($rightEbValue)
+    {        
+        move -r -os -wd 0 0 ($stepSize) ($namesp + $rEyeBrowCtrls[0]);
+    }
+}
+
+global proc EyeBrowFrontBack(int $front)
+{
+    string $namesp = CheckForValidEyeBrow();
+    if($namesp == "failed:(")
+    {
+        print "No EyeBrow Control Selected";
+        return;
+    }
+    global string $rEyeBrowCtrls[];
+    global string $lEyeBrowCtrls[];
+    global int $leftEbValue;
+    global int $rightEbValue;
+    global float $refEyeBrowSize;
+    float $factor = GetEyeBrowSizeFactor($namesp);
+    float $stepSize = $factor * $refEyeBrowSize *$front *(0.03);
+    
+    if($leftEbValue)
+    {
+        move -r -os -wd (-1*$stepSize) 0 0 ($namesp + $lEyeBrowCtrls[0]);
+    }
+    if($rightEbValue)
+    {        
+        move -r -os -wd ($stepSize) 0 0 ($namesp + $rEyeBrowCtrls[0]);
+    }
+}
+
+global proc EyeBrowRotateInOut(int $in)
+{
+    string $namesp = CheckForValidEyeBrow();
+    if($namesp == "failed:(")
+    {
+        print "No EyeBrow Control Selected";
+        return;
+    }
+    global string $rEyeBrowCtrls[];
+    global string $lEyeBrowCtrls[];
+    global int $leftEbValue;
+    global int $rightEbValue;
+    float $stepSize = $in *(5);
+    
+    if($leftEbValue)
+    {
+        rotate -r -os (-1*$stepSize) 0 0 ($namesp + $lEyeBrowCtrls[0]);
+    }
+    if($rightEbValue)
+    {        
+        rotate -r -os (-1*$stepSize) 0 0 ($namesp + $rEyeBrowCtrls[0]);
+    }
+}
+
+global proc EyeBrowTiltFrontBack(int $front)
+{
+    string $namesp = CheckForValidEyeBrow();
+    if($namesp == "failed:(")
+    {
+        print "No EyeBrow Control Selected";
+        return;
+    }
+    global string $rEyeBrowCtrls[];
+    global string $lEyeBrowCtrls[];
+    global int $leftEbValue;
+    global int $rightEbValue;
+    float $stepSize = $front *(5);
+    
+    if($leftEbValue)
+    {
+        rotate -r -os 0 0 ($stepSize) ($namesp + $lEyeBrowCtrls[0]);
+    }
+    if($rightEbValue)
+    {        
+        rotate -r -os 0 0 ($stepSize) ($namesp + $rEyeBrowCtrls[0]);
+    }
+}
+
+global proc EyeBrowRotateFrontBack(int $front)
+{
+    string $namesp = CheckForValidEyeBrow();
+    if($namesp == "failed:(")
+    {
+        print "No EyeBrow Control Selected";
+        return;
+    }
+    global string $rEyeBrowCtrls[];
+    global string $lEyeBrowCtrls[];
+    global int $leftEbValue;
+    global int $rightEbValue;
+    float $stepSize = $front *(5);
+    
+    if($leftEbValue)
+    {
+        rotate -r -os 0 ($stepSize) 0 ($namesp + $lEyeBrowCtrls[0]);
+    }
+    if($rightEbValue)
+    {        
+        rotate -r -os 0 ($stepSize) 0 ($namesp + $rEyeBrowCtrls[0]);
+    }
+}
+
+global proc EyeBrowIncreaseEffect(int $effect)
+{
+    string $namesp = CheckForValidEyeBrow();
+    if($namesp == "failed:(")
+    {
+        print "No EyeBrow Control Selected";
+        return;
+    }
+    global string $rEyeBrowCtrls[];
+    global string $lEyeBrowCtrls[];
+    global int $leftEbValue;
+    global int $rightEbValue;
+    float $factor;
+    if($effect == 1)
+    {$factor = 1.25;}
+    else
+    {$factor = 0.8;}
+    vector $zero = <<0,0,0>>;
+    vector $unit = <<1,1,1>>;
+    
+    if($leftEbValue)
+    {
+        vector $tmp;
+        int $i;
+        for($i = 0; $i < 4; $i++)
+        {
+            $tmp = `getAttr ($namesp + $lEyeBrowCtrls[$i] + ".translate")`;
+            $tmp = $factor * $tmp;
+            setAttr ($namesp + $lEyeBrowCtrls[$i]+".translate") -type "double3" ($tmp.x) ($tmp.y) ($tmp.z); 
+            
+            $tmp = `getAttr ($namesp + $lEyeBrowCtrls[$i] + ".rotate")`;
+            $tmp = $factor * $tmp;
+            setAttr ($namesp + $lEyeBrowCtrls[$i]+".rotate") -type "double3" ($tmp.x) ($tmp.y) ($tmp.z);
+             
+            $tmp = `getAttr ($namesp + $lEyeBrowCtrls[$i] + ".scale")`;
+            $tmp = $unit + $factor *($tmp - $unit);
+            setAttr ($namesp + $lEyeBrowCtrls[$i]+".scale") -type "double3" ($tmp.x) ($tmp.y) ($tmp.z);
+        }
+    }
+    if($rightEbValue)
+    {        
+        vector $tmp;
+        int $i;
+        for($i = 0; $i < 4; $i++)
+        {
+            $tmp = `getAttr ($namesp + $rEyeBrowCtrls[$i] + ".translate")`;
+            $tmp = $factor * $tmp;
+            setAttr ($namesp + $rEyeBrowCtrls[$i]+".translate") -type "double3" ($tmp.x) ($tmp.y) ($tmp.z); 
+            
+            $tmp = `getAttr ($namesp + $rEyeBrowCtrls[$i] + ".rotate")`;
+            $tmp = $factor * $tmp;
+            setAttr ($namesp + $rEyeBrowCtrls[$i]+".rotate") -type "double3" ($tmp.x) ($tmp.y) ($tmp.z);
+             
+            $tmp = `getAttr ($namesp + $rEyeBrowCtrls[$i] + ".scale")`;
+            $tmp = $unit + $factor *($tmp - $unit);
+            setAttr ($namesp + $rEyeBrowCtrls[$i]+".scale") -type "double3" ($tmp.x) ($tmp.y) ($tmp.z);
+        }
+    }
+}
+
+global proc float GetEyeBrowSizeFactor(string $namesp)
+{
+    global float $refEyeBrowSize;
+    global string $rEyeBrowCtrls[];
+    global string $lEyeBrowCtrls[];
+    global int $leftEbValue;
+    global int $rightEbValue;
+    float $len = 0;
+    if($leftEbValue)
+    {
+        vector $p1 = `xform -q -t -ws ($namesp + "FKExtraEyeBrowStart_L")`;
+        vector $p2 = `xform -q -t -ws ($namesp + "FKExtraEyeBrowEnd_L")`;
+        $len = `mag ($p2-$p1)`;
+    }
+    if($rightEbValue)
+    {
+        vector $p1 = `xform -q -t -ws ($namesp + "FKExtraEyeBrowStart_R")`;
+        vector $p2 = `xform -q -t -ws ($namesp + "FKExtraEyeBrowEnd_R")`;
+        $len = `mag ($p2-$p1)`;
+    }
+    return ($len/$refEyeBrowSize);
+}
+
+global proc string CheckForValidEyeBrow()
+{
+    //returns namespace if valid
+    global string $rEyeBrowCtrls[];
+    global string $lEyeBrowCtrls[];
+    $sels = `ls -sl -fl` ;
+    if(size($sels) == 0)
+    {
+        return "failed:(";
+    }
+    string $buffer[];
+    clear $buffer;
+    string $sel = $sels[0];
+    tokenize $sel ":" $buffer;
+    int $bufferSize = size($buffer);
+    int $i;
+    string $namesp = "";
+    string $name = "";
+    for($i = 0; $i < $bufferSize; $i++)
+    {
+        if($i == $bufferSize-1)
+        {
+            $name = $buffer[$i];
+        }
+        else
+        {
+            $namesp += ($buffer[$i] + ":");
+        }
+    }    
+    int $found1 = stringArrayContains($name, $rEyeBrowCtrls);
+    int $found2 = stringArrayContains($name, $lEyeBrowCtrls);
+    if($found1 + $found2 >= 1)
+    {
+        return $namesp;
+    }
+    else
+    {
+        return "failed:(";
+    }    
+}
+
+global proc LeftEbChanged()
+{    
+   
+    global string $leftEbBox;
+    global int $leftEbValue;
+    $leftEbValue = `checkBox -q -v $leftEbBox`;
+}
+
+global proc RightEbChanged()
+{    
+    global string $rightEbBox;
+    global int $rightEbValue;
+   $rightEbValue = `checkBox -q -v $rightEbBox`;
+}

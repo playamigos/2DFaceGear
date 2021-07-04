@@ -1,0 +1,128 @@
+reloadImgFilePicker();
+global proc reloadImgFilePicker()
+{
+    print "Images Refreshed";
+    global string $imgWindow;
+    global string $imgDocker;    
+    global string $imgScroll;
+    global string $imgColumnLayout;
+    global string $imgGridLayout;
+    global string $imgColumnField;
+    global int $imgColumnCount;
+    global string $imgSizeField;
+    global int $imgSize;
+    global string $labelVisBox;
+    global int $labelVisValue;
+    
+    $sel = `ls -sl -fl` ;
+    if (size($sel)==0 || !`attributeExists "imgID" $sel[0]`)
+    {
+       if(`dockControl -ex "imgDocker"`)
+       {
+           if(`layout -ex $imgGridLayout`)
+           {
+               deleteUI -layout $imgGridLayout;
+           }
+       }
+       else
+       {
+            $imgWindow = `window -sizeable 1`; 
+            $imgScroll = `scrollLayout -p $imgWindow -horizontalScrollBarThickness 16 -verticalScrollBarThickness 16 -cr true`;
+            $imgColumnLayout = `columnLayout -p $imgScroll`;
+            $imgColumnCount = 3;
+            $imgSize = 80;
+            rowLayout -nc 6;
+            text -label "Columns :";
+            $imgColumnField = `intField -minValue 1 -maxValue 20 -value $imgColumnCount -step 1 -cc ColumnsChanged`;
+            text -label "ImageSize :";
+            $imgSizeField = `intField -minValue 20 -maxValue 200 -value $imgSize -step 5 -cc SizeChanged`;
+            $labelVisBox = `checkBox -label "Labels" -cc LabelChanged`;
+            $imgDocker = `dockControl -ret false -area "left" -content $imgWindow -label "IMG Picker" -allowedArea "all" imgDocker`;
+            scriptJob -parent $imgScroll -e "SelectionChanged" "reloadImgFilePicker";      
+       }
+       $imgGridLayout = `rowColumnLayout -parent $imgColumnLayout -nc $imgColumnCount`;
+       return;
+    }
+    $conn = `listConnections -et true -t file ($sel[0]+".imgID")`;
+    string $filePath = `getAttr ($conn[0]+".fileTextureName")`;
+    string $filePatternPath = `getAttr ($conn[0]+".computedFileTextureNamePattern")`;
+    string $dirPath = dirname( $filePath );
+    string $buffer[];
+    clear $buffer;
+    tokenize $filePatternPath "<>" $buffer;
+    $startPhrase = $buffer[0];
+    $endPhrase = $buffer[2];
+    clear $buffer;
+    $tokens = `tokenize $startPhrase "//" $buffer`;
+    $fileNameStartPhrase = $buffer[$tokens - 1];
+    $fileList = `getFileList -folder $dirPath -filespec ($fileNameStartPhrase+"*"+$endPhrase)`;
+    string $attr = ($sel[0]+".imgID");
+    
+    
+
+    if(`dockControl -ex "imgDocker"`)
+    {
+        if(`layout -ex $imgGridLayout`)
+        {
+            deleteUI -layout $imgGridLayout;
+        }
+    }
+    else
+    {
+        $imgWindow = `window -sizeable 1`; 
+        $imgScroll = `scrollLayout -p $imgWindow -horizontalScrollBarThickness 16 -verticalScrollBarThickness 16 -cr true`;
+        $imgColumnLayout = `columnLayout -p $imgScroll`;
+        $imgColumnCount = 3;
+        $imgSize = 80;
+        rowLayout -nc 6;
+        text -label "No of Columns :";
+        $imgColumnField = `intField -minValue 1 -maxValue 20 -value $imgColumnCount -step 1 -cc ColumnsChanged`;
+        text -label "ImageSize :";
+        $imgSizeField = `intField -minValue 20 -maxValue 200 -value $imgSize -step 5 -cc SizeChanged`;
+        $labelVisBox = `checkBox -label "Labels" -cc LabelChanged`;
+        $imgDocker = `dockControl -ret false -area "left" -content $imgWindow -label "IMG Picker" -allowedArea "all" imgDocker`; 
+        scriptJob -parent $imgScroll -e "SelectionChanged" "reloadImgFilePicker";       
+    }
+    if($imgSize == 0)
+    {
+        $imgSize = 80;
+    }
+    $imgGridLayout = `rowColumnLayout -parent $imgColumnLayout -nc $imgColumnCount`;
+    //$imgGridLayout = `gridLayout -parent $imgColumnLayout -cwh 100 100 -cr true`;
+    string $file;
+    for ( $file in $fileList )
+    {
+        $match = `match ("[0-9]+" + $endPhrase) $file`;
+        int $size1 = size($match);
+        int $size2 = size($endPhrase);
+        string $tmpNum = `substring $match 1 ($size1-$size2)`;
+        int $num = (int)$tmpNum;
+        //iconTextButton -p $imgGridLayout -c ("setAttr "+$attr+" "+$num) -style "iconOnly" -image ($dirPath +"/"+ $file) -label $file -w 100 -h 100;
+        $frame = `frameLayout -p $imgGridLayout -label $num -bv true -lv $labelVisValue`;
+        symbolButton -p $frame -c ("setAttr "+$attr+" "+$num) -image ($dirPath +"/"+ $file) -w $imgSize -h $imgSize;
+    } 
+}
+
+global proc ColumnsChanged()
+{    
+   global int $imgColumnCount;
+   global string $imgColumnField;
+   $imgColumnCount = `intField -q -v $imgColumnField`;
+   reloadImgFilePicker();
+}
+
+global proc SizeChanged()
+{    
+   global int $imgSize;
+   global string $imgSizeField;
+   $imgSize = `intField -q -v $imgSizeField`;
+   reloadImgFilePicker();
+}
+
+global proc LabelChanged()
+{    
+   global int $labelVisValue;
+   global string $labelVisBox;
+   $labelVisValue = `checkBox -q -v $labelVisBox`;
+   reloadImgFilePicker();
+}
